@@ -1,0 +1,336 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+
+plot(cars)
+
+```
+
+```{r}
+
+library(data.table)
+library(dplyr)
+library(lubridate)
+library(cluster)
+library(reshape2)
+library(ggplot2)
+
+setwd("/home/usuario/Documents/R/")
+options(scipen=999)
+options(encoding = "latin1")
+
+sellin=fread('./Transaccional/SellIn/SellIn.csv')
+maestroClientes = fread('./Catalogos/Clientes.csv')
+maestroProductos = fread('./Catalogos/Productos.csv')
+
+
+```
+```{r}
+head(maestroClientes)
+head(maestroProductos)
+head(sellin)
+```
+
+
+```{r}
+filter(maestroClientes, Municipio != "QUERETARO") #filtrado de informacion, se incluye la tabla, y despues las condiciones
+```
+
+```{r}
+filter(maestroClientes, porcentaje_hombres %in% c(47.3,48.2) ) #muestra las tuplas donde el valor de porcentaje hombres coincide con uno u otro valor de c(47.3,48.2)
+```
+```{r}
+prueba1 <- filter(maestroClientes, porcentaje_hombres %in% c(47.3,48.2) )
+prueba1 <-  arrange(prueba1, desc(poblacion_total)) #ordena por el nombre de las columnas indicadas
+pruebaSelect = select(prueba1, porcentaje_hombres, porcentaje_mujeres, poblacion_total)# selecciona las cabeceras indicadas, se le puede indicar de un rango a otro de columnas a:d, u omitir columnas usando -
+pruebaSelect2 = select(maestroClientes, Cliente:viviendas_particulares, (-porcentaje_hombres), (-porcentaje_mujeres))
+pruebaSelect2
+#colocar everything() como parametro al final llenara las tuplas con todas las cabeceras, pero colocara al principio las indicadas en select()
+```
+```{r}
+mutate(pruebaSelect2, nx = densidad_poblacion * 100) #Agrega nueva columnas al final de la tabla
+mutate(pruebaSelect2, nx = densidad_poblacion * 100, div = nx %/% 300, mod = nx %% 300)# %/% regresa el resultaro entero de una division, mientras que %% regresa el modulo
+```
+```{r}
+(arr <- 1:10)
+cumsum(arr)
+cummean(arr)
+cumprod(arr)
+min_rank(arr)
+min_rank(desc(arr))
+1:4 + 5:8
+```
+```{r}
+#agrupamiento normal
+prueba1_Group <- group_by(sellin, NombreCliente,Anio, Mes, Dia)
+prueba1_Group = select(prueba1_Group, Anio,Mes,Dia, everything() )
+summarise(prueba1_Group, VentaX = mean(Venta, na.rm = TRUE), count = n())
+```
+```{r}
+#agrupamiento usando pipes
+#na.rm = TRUE remueve campos NA
+prueba2_Group <- sellin %>%
+  group_by(NombreCliente,Anio, Mes, Dia) %>%
+  filter(n()>2) %>%
+  summarise(count = n(),
+          med = median(Venta), #median valor intermedio
+          VentaSum1 = sum(Venta),
+          VentaSum2 = sum(Venta[Venta > 0]), #suma solo donde el valor es mayor a 0
+          VentaSum3 = sum(Venta > 0), #regresa la cuentra de TRUE
+          VentaProm1 = mean(Venta),
+          VentaProm2 = mean(Venta[Venta > 0])) %>% #mean promedio
+  arrange(VentaSum1) %>%
+  filter(VentaProm1 > 40) %>%
+  mutate(ColN = (VentaSum2 > VentaSum1) ) #%>%
+  #select(VentaSum1:ColN)
+
+
+prueba2_Group
+write.csv(prueba2_Group, "datos.csv")
+```
+
+```{r}
+
+glimpse(maestroClientes)
+
+
+```
+
+```{r}
+
+unique(maestroClientes$RefrigeradorSigma)
+
+
+```
+
+```{r}
+
+unique(maestroClientes$Segmento)
+
+```
+
+```{r}
+
+maestroClientes[Segmento == ""]
+
+```
+
+```{r}
+
+glimpse(maestroClientes[Segmento == ""])
+
+```
+
+```{r}
+
+clientes <- maestroClientes[!(Segmento %in% c("E",""))]
+
+
+```
+
+```{r}
+
+clientes[Segmento]
+
+```
+
+```{r}
+
+unique(clientes$RefrigeradorDanone)
+
+```
+
+```{r}
+
+
+clientes[RefrigeradorSigma == ""]$RefrigeradorSigma <-"NO"
+clientes[RefrigeradorLala == ""]$RefrigeradorLala <-"NO"
+clientes[RefrigeradorDanone == ""]$RefrigeradorDanone <-"NO"
+clientes[VitrinaHorizontal == ""]$VitrinaHorizontal <-"NO"
+clientes[Rebanadora == ""]$Rebanadora <-"NO"
+
+
+
+
+```
+
+```{r}
+
+idClientes <- clientes[,c("Cliente","RutaSap")]
+
+idClientes
+
+```
+
+```{r}
+
+sellin <- idClientes[sellin, on=c(Cliente = 'Cliente'), nomatch=0]
+
+
+```
+
+```{r}
+
+nrow(sellin)
+
+```
+
+```{r}
+
+nrow(sellin)
+
+```
+
+```{r}
+
+ncol(sellin)
+
+```
+
+```{r}
+
+ncol(sellin)
+
+```
+
+```{r}
+
+head(sellin)
+
+```
+
+```{r}
+
+
+clientes <- maestroClientes[!(Segmento %in% c("E",""))]
+
+glimpse(clientes)
+
+clientes[RefrigeradorSigma == ""]$RefrigeradorSigma <-"NO"
+clientes[RefrigeradorLala == ""]$RefrigeradorLala <-"NO"
+clientes[RefrigeradorDanone == ""]$RefrigeradorDanone <-"NO"
+clientes[VitrinaHorizontal == ""]$VitrinaHorizontal <-"NO"
+clientes[Rebanadora == ""]$Rebanadora <-"NO"
+clientes[is.na(SKUs)]$SKUs <- 0
+#clientes[rowSums(is.na(clientes)) > 0,]
+
+clientes <- clientes[rowSums(is.na(clientes)) == 0,]
+idClientes <- clientes[,c("Cliente","RutaSap")]
+
+
+
+
+sellin <- idClientes[sellin, on=c(Cliente = 'Cliente'), nomatch=0]
+
+rm(idClientes)
+rm(maestroClientes)
+
+sellin[,RutaSap:=NULL]
+sellin[,NombreCliente:=NULL]
+sellin[,NombreMaterial:=NULL]
+
+glimpse(sellin)
+
+
+idProductos <- maestroProductos[,c("Material","Familia")]
+
+sinregistro <-anti_join(sellin, idProductos, by='Material')
+sinregistro
+
+sellin <- idProductos[sellin,on = c(Material = 'Material'), nomatch=0]
+
+rm(idProductos)
+
+glimpse(sellin)
+
+
+
+
+```
+
+```{r}
+
+glimpse(sellin)
+
+```
+
+```{r}
+
+sellin[Cliente == 612356 & Anio == 2016 & Mes == 1]
+
+```
+
+```{r}
+
+sellin[Cliente == 612356 & Material == 8380 & Anio == 2016 & Mes == 1]
+
+```
+
+```{r}
+
+ventamensual[Cliente == 612356 & Material == 8380 & Anio == 2016 & Mes == 1]
+
+```
+
+```{r}
+
+ventamensual
+
+```
+
+```{r}
+
+
+ventamensual <- sellin %>%
+  group_by(Anio, Mes, Cliente, Material) %>%
+  summarise(ventaMens = sum(Venta), VolMen = sum(Volumen), nfil = n())
+
+
+setDT(ventamensual)
+
+
+
+```
+
+```{r}
+prueba1 <- sellin %>%
+  group_by(Anio, Mes, Cliente) %>%
+  summarise(ventamensualTotal=sum(Venta), filas = n())
+setDT(prueba1)
+prueba1
+```
+
+```{r}
+unique(sellin$Mes)
+```
+
+```{r}
+
+
+ventamensualneta <- sellin %>%
+  group_by(Ano, Mes, Cliente) %>%
+  summarise(ventaMens = sum(Venta), VolMen = sum(Volumen), nfil = n())
+
+
+setDT(ventamensualneta)
+
+```
+
+```{r}
+
+ventamensualneta
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
